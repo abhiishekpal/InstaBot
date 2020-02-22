@@ -1,7 +1,11 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
-
+import requests
+import os
+import cv2
+import numpy as np
+import urllib.request
 
 class Instabot:
 
@@ -91,6 +95,52 @@ class Instabot:
             
 
         print(lis)
+        
+    def get_images(self, uid, path):
+        
+        self.driver.get("https://www.instagram.com/{}/".format(uid))
+        time.sleep(5)
+        SCROLL_PAUSE_TIME = 3
+
+
+        last_height = self.driver.execute_script("return document.body.scrollHeight")
+        images = []
+        images2 = []
+        while True:
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(SCROLL_PAUSE_TIME)
+            new_height = self.driver.execute_script("return document.body.scrollHeight")
+            if new_height == last_height:
+                break
+            last_height = new_height
+    
+    
+            imag = self.driver.find_elements_by_xpath("//img[@class='FFVAD']")
+            for item in imag:
+                pt = item.get_attribute("src").split("?_nc")[0]
+                if(pt not in images2):
+                    images2.append(pt)
+                    images.append(item.get_attribute("src"))
+                    
+        try:
+            os.mkdir(path+'/{}'.format(uid))
+        except:
+            pass
+        
+        for idx, item in enumerate(images):
+            
+            url = item
+            resp = urllib.request.urlopen(url)
+            image = np.asarray(bytearray(resp.read()), dtype="uint8")
+            image = cv2.imdecode(image, cv2.IMREAD_COLOR)
+           
+            path2 = path+"/{}/{}.jpg".format(uid,idx)
+            cv2.imwrite(path2, image)
+            
+            
+       
+            
+        
 
     
 username  = input('Enter The username: ')
@@ -99,7 +149,8 @@ bot = Instabot(username, password)
 bot.login()
 # time.sleep()
 # bot.likephoto('japan')
-bot.get_following()
-bot.closeBrowser()
+# bot.get_following()
+bot.get_images('vewn_', './img')
+# bot.closeBrowser()
 
 
